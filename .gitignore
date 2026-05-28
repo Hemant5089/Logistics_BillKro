@@ -1,0 +1,9 @@
+node_modules
+dist
+.env
+coverage
+.prisma
+generated
+uploads
+storage/temp
+storage/generated
