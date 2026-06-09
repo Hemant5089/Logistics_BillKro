@@ -16,15 +16,17 @@ export class ShipmentsController {
   @Post()
   create(
     @Body()
-    body: {
+    data
+    : {
       awbNumber: string;
+      orderId: string;
       sellerId: string;
       carrierId: string;
       zoneId: string;
       weight: number;
     },
   ) {
-    return this.shipmentsService.create(body);
+    return this.shipmentsService.create(data);
   }
 
   @Get()

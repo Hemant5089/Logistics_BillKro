@@ -8,12 +8,13 @@ export class ShipmentsService {
   ) {}
 
   async create(data: {
-    awbNumber: string;
-    sellerId: string;
-    carrierId: string;
-    zoneId: string;
-    weight: number;
-  }) {
+  awbNumber: string;
+  orderId: string;
+  sellerId: string;
+  carrierId: string;
+  zoneId: string;
+  weight: number;
+}) {
     return this.prisma.shipment.create({
       data,
       include: {
