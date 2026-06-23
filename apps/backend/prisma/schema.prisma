@@ -44,6 +44,7 @@ model Seller {
   isActive Boolean @default(true)
 
   shipments Shipment[]
+  rateCards RateCard[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -57,6 +58,7 @@ model Carrier {
   isActive Boolean @default(true)
 
   shipments Shipment[]
+  rateCards RateCard[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -70,6 +72,7 @@ model Zone {
   isActive Boolean @default(true)
 
   shipments Shipment[]
+  rateCards RateCard[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -81,6 +84,28 @@ model Shipment {
   awbNumber String @unique
   orderId   String
 
+  customerName String?
+
+  senderName    String?
+  senderCity    String?
+  senderState   String?
+  senderPincode String?
+
+  receiverName    String?
+  receiverCity    String?
+  receiverState   String?
+  receiverPincode String?
+
+  deadWeight       Float?
+  volumetricWeight Float?
+
+  shippingType String?
+
+  paymentMethod String?
+
+  totalAmount Float?
+  codAmount   Float?
+
   sellerId String
   seller   Seller @relation(fields: [sellerId], references: [id])
 
@@ -89,8 +114,6 @@ model Shipment {
 
   zoneId String
   zone   Zone   @relation(fields: [zoneId], references: [id])
-
-  weight Float
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -110,6 +133,36 @@ model UploadJob {
   failedRows Int @default(0)
 
   createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
 
+model RateCard {
+  id String @id @default(cuid())
+
+  sellerId String
+  seller   Seller @relation(fields: [sellerId], references: [id])
+
+  carrierId String
+  carrier   Carrier @relation(fields: [carrierId], references: [id])
+
+  zoneId String
+  zone   Zone   @relation(fields: [zoneId], references: [id])
+
+  startWeight Float
+  endWeight   Float
+
+  baseRate Float
+
+  additionalWeight Float
+
+  additionalRate Float
+
+  codCharge Float?
+
+  rtoCharge Float?
+
+  isActive Boolean @default(true)
+
+  createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 }
