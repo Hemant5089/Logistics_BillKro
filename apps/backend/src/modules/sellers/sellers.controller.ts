@@ -1,10 +1,10 @@
 import {
-  Body,
   Controller,
   Get,
+  Param,
   Post,
+  Body,
 } from '@nestjs/common';
-
 import { SellersService } from './sellers.service';
 
 @Controller('sellers')
@@ -14,7 +14,7 @@ export class SellersController {
   ) {}
 
   @Post()
-  async create(
+  create(
     @Body()
     body: {
       sellerName: string;
@@ -32,7 +32,16 @@ export class SellersController {
   }
 
   @Get()
-  async findAll() {
+  findAll() {
     return this.sellersService.findAll();
   }
+
+  // @Get(':sellerId/rate-cards')
+  // getSellerRateCards(
+  //   @Param('sellerId') sellerId: string,
+  // ) {
+  //   return this.sellersService.getSellerRateCards(
+  //     sellerId,
+  //   );
+  // }
 }
