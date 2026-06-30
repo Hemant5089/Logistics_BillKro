@@ -12,7 +12,7 @@ RUN npm install
 COPY . .
 
 # Provide a build-time DATABASE_URL so Prisma can validate schema during generate
-ENV DATABASE_URL=postgresql://admin:admin@postgres:5432/logistics
+ENV DATABASE_URL=postgresql://admin:admin@postgres:5432/logistics_billkro
 
 # Generate Prisma client
 RUN npm install @prisma/client
