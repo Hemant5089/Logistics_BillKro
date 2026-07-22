@@ -1,33 +1,30 @@
-// import {
-//   Body,
-//   Controller,
-//   Get,
-//   Post,
-// } from '@nestjs/common';
+import {
+  Controller,
+  Post,
+  Param,
+  UploadedFile,
+  UseInterceptors,
+} from '@nestjs/common';
+import { FileInterceptor } from '@nestjs/platform-express';
 
-// import { ShipmentsService } from './shipments.service';
+import { ShipmentUploadService } from './services/shipment-upload.service';
 
-// @Controller('shipments')
-// export class ShipmentsController {
-//   constructor(
-//     private readonly shipmentsService: ShipmentsService,
-//   ) {}
+@Controller('shipments')
+export class ShipmentsController {
+  constructor(
+    private readonly shipmentUploadService: ShipmentUploadService,
+  ) {}
 
-//   @Post()
-//   create(
-//     @Body()
-//     body: {
-//       awbNumber: string;
-//       sellerId: string;
-//       carrierId: string;
-//       zoneId: string;
-//       weight: number;
-//     },
-//   ) {
-//     return this.shipmentsService.create(body);
-//   }
-//   @Get()
-//   findAll() {
-//     return this.shipmentsService.findAll();
-//   }
-// }
+  @Post('test-import/:sellerId')
+  @UseInterceptors(FileInterceptor('file'))
+  async testImport(
+    @Param('sellerId') sellerId: string,
+
+    @UploadedFile() file: any,
+  ) {
+    return this.shipmentUploadService.upload(
+      sellerId,
+      file.buffer,
+    );
+  }
+}

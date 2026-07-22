@@ -18,7 +18,6 @@ enum ServiceType {
   EXPRESS
 }
 
-
 // User
 model User {
   id String @id @default(cuid())
@@ -55,6 +54,7 @@ model Seller {
 
   shipments       Shipment[]
   sellerRateCards SellerRateCard[]
+  billingRecords  BillingRecord[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -69,8 +69,8 @@ model Carrier {
 
   isActive Boolean @default(true)
 
-  shipments Shipment[]
-  rateCards RateCard[]
+  shipments      Shipment[]
+  billingRecords BillingRecord[]
 
   rateCardTemplates RateCardTemplate[]
   sellerRateCards   SellerRateCard[]
@@ -78,7 +78,6 @@ model Carrier {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 }
-
 
 // Zones
 model Zone {
@@ -88,8 +87,8 @@ model Zone {
 
   isActive Boolean @default(true)
 
-  shipments Shipment[]
-  rateCards RateCard[]
+  shipments      Shipment[]
+  billingRecords BillingRecord[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -102,17 +101,34 @@ enum PaymentMode {
   COD
 }
 
+
+// Need to implement previews enum here // 
+
+
 enum ShipmentStatus {
   BOOKED
+  PICKUP_AWAITED
   PICKED_UP
+  SHIPPED
   IN_TRANSIT
+  REACHED_AT_DESTINATION
+  OUT_FOR_DELIVERY
   DELIVERED
-  RTO
+  UNDELIVERED
+  CANCELLED
+
+  RTO_BOOKED
+  RTO_IN_TRANSIT
+  RTO_REACHED_DESTINATION
+  RTO_OUT_FOR_DELIVERY
   RTO_DELIVERED
+
   LOST
   DAMAGED
-  CANCELLED
+
+  UNKNOWN
 }
+
 
 enum BillingStatus {
   PENDING
@@ -130,40 +146,19 @@ model Shipment {
   id String @id @default(cuid())
 
   awbNumber String @unique
-  orderId   String
-
-  customerName String?
-
-  senderName    String?
-  senderCity    String?
-  senderState   String?
-  senderPincode String?
-
-  receiverName    String?
-  receiverCity    String?
-  receiverState   String?
-  receiverPincode String?
-
-  deadWeight       Float?
-  volumetricWeight Float?
-
-  shippingType String?
-
-  paymentMethod String?
-
-  totalAmount Float?
-  codAmount   Float?
 
   orderId String?
 
+  customerName String?
+
   sellerId String
-  seller Seller @relation(fields: [sellerId], references: [id])
+  seller   Seller @relation(fields: [sellerId], references: [id])
 
   carrierId String
-  carrier Carrier @relation(fields: [carrierId], references: [id])
+  carrier   Carrier @relation(fields: [carrierId], references: [id])
 
   zoneId String
-  zone Zone @relation(fields: [zoneId], references: [id])
+  zone   Zone   @relation(fields: [zoneId], references: [id])
 
   service ServiceType
 
@@ -171,26 +166,28 @@ model Shipment {
 
   billingEligibility BillingEligibility
 
-
-  productValue Float
+  billingRecord BillingRecord?
+  productValue  Float
 
   actualWeight Float
 
-  length Float?
+  length  Float?
   breadth Float?
-  height Float?
+  height  Float?
 
   volumetricWeight Float
 
   applicableWeight Float
 
-  pickupPincode String
-  pickupCity String
-  pickupState String
+  senderName    String
+  senderPincode String
+  senderCity    String
+  senderState   String
 
-  deliveryPincode String
-  deliveryCity String
-  deliveryState String
+  receiverName    String
+  receiverPincode String
+  receiverCity    String
+  receiverState   String
 
   shipmentStatus ShipmentStatus
 
@@ -199,6 +196,7 @@ model Shipment {
   shipmentDate DateTime?
 
   billingMonth String?
+
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -211,11 +209,10 @@ model Shipment {
   @@index([shipmentDate])
 }
 
-
 model MetroCity {
   id String @id @default(cuid())
 
-  city String
+  city  String
   state String
 
   isActive Boolean @default(true)
@@ -230,7 +227,7 @@ model SpecialRegion {
   id String @id @default(cuid())
 
   state String
-  city String?
+  city  String?
 
   isActive Boolean @default(true)
 
@@ -242,7 +239,6 @@ model SpecialRegion {
 
 // Rate Card
 
-
 model RateCardTemplate {
   id String @id @default(cuid())
 
@@ -253,55 +249,6 @@ model RateCardTemplate {
 
   service ServiceType
 
-<<<<<<< HEAD
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-}
-
-model UploadJob {
-  id String @id @default(cuid())
-
-  fileName String
-
-  status String @default("PENDING")
-
-  totalRows Int @default(0)
-
-  processedRows Int @default(0)
-
-  failedRows Int @default(0)
-
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-}
-
-model RateCard {
-  id String @id @default(cuid())
-
-  sellerId String
-  seller   Seller @relation(fields: [sellerId], references: [id])
-
-  carrierId String
-  carrier   Carrier @relation(fields: [carrierId], references: [id])
-
-  zoneId String
-  zone   Zone   @relation(fields: [zoneId], references: [id])
-
-  startWeight Float
-  endWeight   Float
-
-  baseRate Float
-
-  additionalWeight Float
-
-  additionalRate Float
-
-  codCharge Float?
-
-  rtoCharge Float?
-
-  isActive Boolean @default(true)
-=======
   startWeight Float
   endWeight   Float
 
@@ -327,7 +274,6 @@ model RateCard {
   isActive Boolean @default(true)
 
   sellerRateCards SellerRateCard[]
->>>>>>> 05bdeee (Add seller rate card and rate card template , shipment schema,rate card file import)
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -348,7 +294,18 @@ model SellerRateCard {
   carrierId String
   carrier   Carrier @relation(fields: [carrierId], references: [id])
 
-  service ServiceType
+  service        ServiceType
+  billingRecords BillingRecord[]
+
+  // COD Rules
+  codThresholdAmount Float @default(2000)
+
+  codFixedCharge Float @default(30)
+
+  codPercentage Float @default(1.9)
+
+  // RTO Rule
+  rtoCharge Float @default(30)
 
   startWeight Float
   endWeight   Float
@@ -361,7 +318,6 @@ model SellerRateCard {
 
   stateAmount           Float
   stateAdditionalAmount Float
-
   roiAmount           Float
   roiAdditionalAmount Float
 
@@ -378,4 +334,52 @@ model SellerRateCard {
 
   @@index([sellerId])
   @@index([carrierId])
+}
+
+model BillingRecord {
+  id String @id @default(cuid())
+
+  shipmentId String   @unique
+  shipment   Shipment @relation(fields: [shipmentId], references: [id])
+
+  sellerId String
+  seller   Seller @relation(fields: [sellerId], references: [id])
+
+  carrierId String
+  carrier   Carrier @relation(fields: [carrierId], references: [id])
+
+  zoneId String
+  zone   Zone   @relation(fields: [zoneId], references: [id])
+
+  sellerRateCardId String
+  sellerRateCard   SellerRateCard @relation(fields: [sellerRateCardId], references: [id])
+
+  applicableWeight Float
+
+  billedWeight Float
+
+  slabStartWeight Float
+
+  slabEndWeight Float
+
+  forwardBaseCharge Float
+
+  forwardAdditionalCharge Float
+
+  forwardTotalCharge Float
+
+  rtoCharge Float
+
+  codCharge Float
+
+  totalCharge Float
+
+  billingMonth String
+
+  createdAt DateTime @default(now())
+
+  updatedAt DateTime @updatedAt
+
+  @@index([sellerId])
+  @@index([billingMonth])
 }
