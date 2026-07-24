@@ -1,98 +1,78 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useState } from "react";
+import SellerSearch from "@/components/sellers/seller-search";
+import SellerTable from "@/components/sellers/seller-table";
+import SellerModal from "@/components/sellers/seller-modal";
+import { Seller } from "@/types/Seller";
+import { SellerService } from "@/services/seller.service";
 
-import { useRouter } from "next/navigation";
+export default function SellersPage() {
+  const [open, setOpen] = useState(false);
 
-import { useAuthStore } from "@/store/auth.store";
+  const [sellers, setSellers] = useState<Seller[]>(
+    SellerService.getAll()
+  );
 
-import { useCurrentUser } from "@/hooks/use-current-user";
+  const [selectedSeller, setSelectedSeller] =
+    useState<Seller | null>(null);
 
-import { dashboardService } from "@/services/dashboard.service";
+  const handleSaveSeller = (seller: Seller) => {
+    if (selectedSeller) {
+      // Edit existing seller
+      SellerService.update(seller);
+    } else {
+      // Add new seller
+      SellerService.add(seller);
+    }
 
-import DashboardHeader from "@/components/dashboard/dashboard-header";
-
-import UserInfo from "@/components/dashboard/user-info";
-
-import StatsCard from "@/components/dashboard/stats-card";
-
-import Loader from "@/components/ui/loader";
-
-interface DashboardStats {
-  totalSellers: number;
-  totalCarriers: number;
-  totalZones: number;
-}
-
-export default function DashboardPage() {
-  const router = useRouter();
-
-  const { logout } = useAuthStore();
-
-  const { user, loading } =
-    useCurrentUser();
-
-  const [stats, setStats] =
-    useState<DashboardStats>({
-      totalSellers: 0,
-      totalCarriers: 0,
-      totalZones: 0,
-    });
-
-  useEffect(() => {
-    const loadStats = async () => {
-      try {
-        const data =
-          await dashboardService.getStats();
-
-        setStats(data);
-      } catch (error) {
-        console.error(error);
-      }
-    };
-
-    loadStats();
-  }, []);
-
-  const handleLogout = () => {
-    logout();
-
-    router.push("/login");
+    setSellers([...SellerService.getAll()]);
+    setOpen(false);
+    setSelectedSeller(null);
   };
 
-  if (loading) {
-    return <Loader />;
-  }
+  const handleEditSeller = (seller: Seller) => {
+    setSelectedSeller(seller);
+    setOpen(true);
+  };
+
+  const handleAddSeller = () => {
+    setSelectedSeller(null);
+    setOpen(true);
+  };
 
   return (
-    <div className="min-h-screen bg-gray-100 p-10">
-      <DashboardHeader
-        onLogout={handleLogout}
-      />
+    <div className="space-y-6">
+      {/* Header */}
+      <div>
+        <h1 className="text-3xl font-bold text-slate-800">
+          Sellers
+        </h1>
 
-      <div className="grid grid-cols-3 gap-6 mb-8">
-        <StatsCard
-          title="Total Sellers"
-          value={stats.totalSellers}
-        />
-
-        <StatsCard
-          title="Total Carriers"
-          value={stats.totalCarriers}
-        />
-
-        <StatsCard
-          title="Total Zones"
-          value={stats.totalZones}
-        />
+        <p className="text-gray-500">
+          Manage all registered sellers.
+        </p>
       </div>
 
-      {user && (
-        <UserInfo
-          email={user.email}
-          role={user.role}
-        />
-      )}
+      {/* Search */}
+      <SellerSearch onAdd={handleAddSeller} />
+
+      {/* Table */}
+      <SellerTable
+        sellers={sellers}
+        onEdit={handleEditSeller}
+      />
+
+      {/* Modal */}
+      <SellerModal
+        open={open}
+        seller={selectedSeller}
+        onClose={() => {
+          setOpen(false);
+          setSelectedSeller(null);
+        }}
+        onSave={handleSaveSeller}
+      />
     </div>
   );
 }

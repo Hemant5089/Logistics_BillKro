@@ -1,11 +1,15 @@
 import {
   Controller,
   Get,
-  Param,
   Post,
+  Patch,
+  Delete,
   Body,
+  Param,
 } from '@nestjs/common';
+
 import { SellersService } from './sellers.service';
+import { Public } from '../auth/decorators/public.decorator';
 
 @Controller('sellers')
 export class SellersController {
@@ -13,6 +17,7 @@ export class SellersController {
     private readonly sellersService: SellersService,
   ) {}
 
+  @Public()
   @Post()
   create(
     @Body()
@@ -31,17 +36,30 @@ export class SellersController {
     return this.sellersService.create(body);
   }
 
+  @Public()
   @Get()
   findAll() {
     return this.sellersService.findAll();
   }
 
-  // @Get(':sellerId/rate-cards')
-  // getSellerRateCards(
-  //   @Param('sellerId') sellerId: string,
-  // ) {
-  //   return this.sellersService.getSellerRateCards(
-  //     sellerId,
-  //   );
-  // }
+  @Public()
+  @Get(':id')
+  findOne(@Param('id') id: string) {
+    return this.sellersService.findOne(id);
+  }
+
+  @Public()
+  @Patch(':id')
+  update(
+    @Param('id') id: string,
+    @Body() body: any,
+  ) {
+    return this.sellersService.update(id, body);
+  }
+
+  @Public()
+  @Delete(':id')
+  remove(@Param('id') id: string) {
+    return this.sellersService.remove(id);
+  }
 }
