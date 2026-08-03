@@ -57,7 +57,8 @@ export class ShipmentUploadService {
     this.shipmentValidationService.validate(
       rows,
     );
-
+console.log("Validation Result:");
+console.log(validation);
   if (validation.invalidRows > 0) {
     return validation;
   }
@@ -157,7 +158,10 @@ for (const row of validation.data) {
       specialSet,
     );
 
-  const zone = zoneMap.get(zoneName);
+ console.log("Resolved Zone:", zoneName);
+console.log("Zone Table:", [...zoneMap.keys()]);
+
+const zone = zoneMap.get(zoneName);
   const shipmentStatus =
     ShipmentStatusMap[row.shipmentStatus?.trim()] ??
     ShipmentStatus.UNKNOWN;

@@ -85,67 +85,63 @@ export class AuthService {
   }
 
   async login(
-    dto: LoginDto,
-  ) {
+  dto: LoginDto,
+) {
 
-    const user =
-      await this.prisma.user.findUnique({
-
-        where: {
-          email: dto.email,
-        },
-
-      });
-
-    if (!user) {
-
-      throw new UnauthorizedException(
-        'Invalid credentials',
-      );
-
-    }
-
-    const isPasswordValid =
-      await bcrypt.compare(
-        dto.password,
-        user.password,
-      );
-
-    if (!isPasswordValid) {
-
-      throw new UnauthorizedException(
-        'Invalid credentials',
-      );
-
-    }
-
-    const accessToken =
-      await this.jwtService.signAsync({
-
-        sub: user.id,
-
-        email: user.email,
-
-        role: user.role,
-
-      });
-
-    return {
-
-      accessToken,
-
-      user: {
-
-        id: user.id,
-
-        name: user.name,
-
-        email: user.email,
-
-        role: user.role,
-
+  const user =
+    await this.prisma.user.findUnique({
+      where: {
+        email: dto.email,
       },
+    });
 
-    };
+  console.log("==================================");
+  console.log("Email received:", dto.email);
+  console.log("User found:", user);
+
+  if (!user) {
+
+    console.log("❌ User not found");
+
+    throw new UnauthorizedException(
+      "Invalid credentials",
+    );
   }
-}
+
+  const isPasswordValid =
+    await bcrypt.compare(
+      dto.password,
+      user.password,
+    );
+
+  console.log("Password received:", dto.password);
+  console.log("Password valid:", isPasswordValid);
+
+  if (!isPasswordValid) {
+
+    console.log("❌ Password mismatch");
+
+    throw new UnauthorizedException(
+      "Invalid credentials",
+    );
+  }
+
+  console.log("✅ Login Successful");
+
+  const accessToken =
+    await this.jwtService.signAsync({
+      sub: user.id,
+      email: user.email,
+      role: user.role,
+    });
+
+  return {
+    accessToken,
+    user: {
+      id: user.id,
+      name: user.name,
+      email: user.email,
+      role: user.role,
+    },
+  };
+} }

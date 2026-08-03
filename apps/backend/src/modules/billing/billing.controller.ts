@@ -1,4 +1,13 @@
-import { Controller, Get,Post,Param, Query } from '@nestjs/common';
+import {
+  Controller,
+  Get,
+  Post,
+  Param,
+  Query,
+} from '@nestjs/common';
+
+import { Public } from '../auth/decorators/public.decorator';
+
 import { BillingEngineService } from './services/billing-engine.service';
 import { BillingPreviewService } from './services/billing-preview.service';
 
@@ -9,6 +18,7 @@ export class BillingController {
     private readonly billingEngine: BillingEngineService,
   ) {}
 
+  @Public()
   @Get('preview/:sellerId')
   async preview(
     @Param('sellerId') sellerId: string,
@@ -21,16 +31,16 @@ export class BillingController {
     );
   }
 
+  @Public()
   @Post('generate/:sellerId')
-async generate(
-  @Param('sellerId') sellerId: string,
+  async generate(
+    @Param('sellerId') sellerId: string,
 
-  @Query('month') billingMonth: string,
-) {
-  return this.billingEngine.generateBill(
-    sellerId,
-    billingMonth,
-  );
-}
-
+    @Query('month') billingMonth: string,
+  ) {
+    return this.billingEngine.generateBill(
+      sellerId,
+      billingMonth,
+    );
+  }
 }

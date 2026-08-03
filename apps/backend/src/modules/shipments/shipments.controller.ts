@@ -9,12 +9,14 @@ import { FileInterceptor } from '@nestjs/platform-express';
 
 import { ShipmentUploadService } from './services/shipment-upload.service';
 
+import { Public } from '../auth/decorators/public.decorator';
+
 @Controller('shipments')
 export class ShipmentsController {
   constructor(
     private readonly shipmentUploadService: ShipmentUploadService,
   ) {}
-
+@Public()
   @Post('test-import/:sellerId')
   @UseInterceptors(FileInterceptor('file'))
   async testImport(

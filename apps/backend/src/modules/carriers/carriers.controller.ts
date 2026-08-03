@@ -6,6 +6,7 @@ import {
 } from '@nestjs/common';
 
 import { CarriersService } from './carriers.service';
+import { Public } from '../auth/decorators/public.decorator';
 
 @Controller('carriers')
 export class CarriersController {
@@ -13,6 +14,7 @@ export class CarriersController {
     private readonly carriersService: CarriersService,
   ) {}
 
+  @Public()
   @Post()
   async create(
     @Body()
@@ -23,6 +25,7 @@ export class CarriersController {
     return this.carriersService.create(body);
   }
 
+  @Public()
   @Get()
   async findAll() {
     return this.carriersService.findAll();

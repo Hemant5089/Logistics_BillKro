@@ -28,7 +28,7 @@ export class ShipmentImportService {
     // Skip Header Row
     for (let i = 1; i < rows.length; i++) {
       const row = rows[i];
-
+  console.log("RAW ROW:", row);
       if (
         !row ||
         row.every(

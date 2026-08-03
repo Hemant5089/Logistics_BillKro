@@ -19,10 +19,12 @@ import { SellersModule } from './modules/sellers/sellers.module';
 import { RateCardTemplateModule } from './rate-card-template/rate-card-template.module';
 import { SellerRateCardsModule } from './modules/seller-rate-cards/seller-rate-cards.module';
 import { InvoiceModule } from './modules/invoice/invoice.module';
+import { ReportsModule } from './modules/reports/reports.module';
+import { RateCardsModule } from './modules/rate-cards/rate-cards.module';
 
 @Module({
   // imports: [AuthModule, UsersModule, UploadsModule, BillingModule, ShipmentsModule, SellersModule, CarriersModule, ZonesModule, DashboardModule],
-    imports: [PrismaModule , AuthModule, UsersModule, UploadsModule, BillingModule, ShipmentsModule, SellersModule,CarriersModule,ZonesModule,DashboardModule, RateCardTemplateModule, SellerRateCardsModule, InvoiceModule],
+    imports: [PrismaModule , AuthModule, UsersModule, UploadsModule, BillingModule, ShipmentsModule, SellersModule,CarriersModule,ZonesModule,DashboardModule, RateCardTemplateModule, SellerRateCardsModule, InvoiceModule, ReportsModule, RateCardsModule],
 
   controllers: [AppController],
 
