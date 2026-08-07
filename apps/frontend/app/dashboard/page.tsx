@@ -1,90 +1,104 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { DashboardService } from "@/services/dashboard.service";
 
-import SellerSearch from "@/components/sellers/seller-search";
-import SellerTable from "@/components/sellers/seller-table";
-import SellerModal from "@/components/sellers/seller-modal";
+interface DashboardStats {
+  totalSellers: number;
+  totalCarriers: number;
+  totalShipments: number;
+  totalBilling: number;
+}
 
-import { Seller } from "@/types/seller";
-import { SellerService } from "@/services/seller.service";
+export default function DashboardPage() {
+  const [stats, setStats] = useState<DashboardStats>({
+    totalSellers: 0,
+    totalCarriers: 0,
+    totalShipments: 0,
+    totalBilling: 0,
+  });
 
-export default function SellersPage() {
-  const [open, setOpen] = useState(false);
-
-  const [sellers, setSellers] = useState<Seller[]>([]);
-
-  const [selectedSeller, setSelectedSeller] =
-    useState<Seller | null>(null);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    loadSellers();
+    loadDashboard();
   }, []);
 
-  async function loadSellers() {
+  async function loadDashboard() {
     try {
-      const data = await SellerService.getAll();
-      setSellers(data);
-    } catch (err) {
-      console.error(err);
+      const data = await DashboardService.getStats();
+      setStats(data);
+    } catch (error) {
+      console.error(error);
+      alert("Failed to load dashboard.");
+    } finally {
+      setLoading(false);
     }
   }
 
-  const handleSaveSeller = async (seller: Seller) => {
-    try {
-      if (selectedSeller) {
-        await SellerService.update(selectedSeller.id, seller);
-      } else {
-        await SellerService.add(seller);
-      }
-
-      await loadSellers();
-
-      setOpen(false);
-      setSelectedSeller(null);
-    } catch (err) {
-      console.error(err);
-    }
-  };
-
-  const handleEditSeller = (seller: Seller) => {
-    setSelectedSeller(seller);
-    setOpen(true);
-  };
-
-  const handleAddSeller = () => {
-    setSelectedSeller(null);
-    setOpen(true);
-  };
+  if (loading) {
+    return (
+      <div className="text-center text-lg font-semibold">
+        Loading Dashboard...
+      </div>
+    );
+  }
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-8">
       <div>
         <h1 className="text-3xl font-bold text-slate-800">
-          Sellers
+          Dashboard
         </h1>
 
         <p className="text-gray-500">
-          Manage all registered sellers.
+          Logistics Billing Automation Overview
         </p>
       </div>
 
-      <SellerSearch onAdd={handleAddSeller} />
+      <div className="grid grid-cols-1 gap-6 md:grid-cols-2 xl:grid-cols-4">
 
-      <SellerTable
-        sellers={sellers}
-        onEdit={handleEditSeller}
-      />
+        <div className="rounded-xl bg-white p-6 shadow">
+          <p className="text-gray-500">
+            Total Sellers
+          </p>
 
-      <SellerModal
-        open={open}
-        seller={selectedSeller}
-        onClose={() => {
-          setOpen(false);
-          setSelectedSeller(null);
-        }}
-        onSave={handleSaveSeller}
-      />
+          <h2 className="mt-3 text-4xl font-bold text-blue-600">
+            {stats.totalSellers}
+          </h2>
+        </div>
+
+        <div className="rounded-xl bg-white p-6 shadow">
+          <p className="text-gray-500">
+            Total Carriers
+          </p>
+
+          <h2 className="mt-3 text-4xl font-bold text-green-600">
+            {stats.totalCarriers}
+          </h2>
+        </div>
+
+        <div className="rounded-xl bg-white p-6 shadow">
+          <p className="text-gray-500">
+            Total Shipments
+          </p>
+
+          <h2 className="mt-3 text-4xl font-bold text-orange-600">
+            {stats.totalShipments}
+          </h2>
+        </div>
+
+        <div className="rounded-xl bg-white p-6 shadow">
+          <p className="text-gray-500">
+            Total Billing Records
+          </p>
+
+          <h2 className="mt-3 text-4xl font-bold text-purple-600">
+            {stats.totalBilling}
+          </h2>
+        </div>
+
+      </div>
     </div>
   );
 }

@@ -8,16 +8,34 @@ export class DashboardService {
   ) {}
 
   async getStats() {
-    const totalSellers = await this.prisma.seller.count();
+    const [
+      totalSellers,
+      totalCarriers,
+      totalShipments,
+      totalBilling,
+    ] = await Promise.all([
+      this.prisma.seller.count(),
 
-    const totalCarriers = await this.prisma.carrier.count();
+      this.prisma.carrier.count(),
 
-    const totalZones = await this.prisma.zone.count();
+      this.prisma.shipment.count(),
+
+      this.prisma.billingRecord.aggregate({
+        _sum: {
+          totalCharge: true,
+        },
+      }),
+    ]);
 
     return {
       totalSellers,
+
       totalCarriers,
-      totalZones,
+
+      totalShipments,
+
+      totalBilling:
+        totalBilling._sum.totalCharge ?? 0,
     };
   }
 }

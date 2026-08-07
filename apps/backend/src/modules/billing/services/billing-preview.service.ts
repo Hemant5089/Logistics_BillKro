@@ -108,14 +108,29 @@ export class BillingPreviewService {
     const calculations: any[] = [];
 
     for (const shipment of shipments) {
-      const rateCard =
-        this.rateResolver.findRate(
-          rateCards,
-          shipment.carrierId,
-          shipment.service,
-          shipment.applicableWeight,
-        );
+      let rateCard;
 
+try {
+  rateCard = this.rateResolver.findRate(
+    rateCards,
+    shipment.carrierId,
+    shipment.service,
+    shipment.applicableWeight,
+  );
+} catch (error) {
+  console.log(
+    `Rate card not found for AWB: ${shipment.awbNumber}`,
+  );
+
+  continue;
+}
+if (!shipment.zone) {
+  console.log(
+    `Zone not found for AWB: ${shipment.awbNumber}`,
+  );
+
+  continue;
+}
       const forward =
         this.forwardCalculator.calculate(
           rateCard,

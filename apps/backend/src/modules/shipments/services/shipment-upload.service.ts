@@ -163,8 +163,9 @@ console.log("Zone Table:", [...zoneMap.keys()]);
 
 const zone = zoneMap.get(zoneName);
   const shipmentStatus =
-    ShipmentStatusMap[row.shipmentStatus?.trim()] ??
-    ShipmentStatus.UNKNOWN;
+  ShipmentStatusMap[
+    row.shipmentStatus?.trim().toUpperCase()
+  ] ?? ShipmentStatus.UNKNOWN;
 
  const shipmentData = {
   awbNumber: row.awbNumber,

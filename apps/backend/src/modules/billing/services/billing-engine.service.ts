@@ -52,25 +52,19 @@ export class BillingEngineService {
 
   billingStatus: 'PENDING',
 
-  // shipmentStatus: {
-  //   notIn: [
-  //     'CANCELLED',
-  //     'NOT_PICKED',
-  //     'LOST',
-  //     'DAMAGED',
-  //   ],
-  // },
+  billingEligibility: 'BILLABLE',
 
   NOT: {
-  shipmentStatus: {
-    in: [
-      ShipmentStatus.CANCELLED,
-      ShipmentStatus.LOST,
-      ShipmentStatus.DAMAGED,
-    ],
+    shipmentStatus: {
+      in: [
+        ShipmentStatus.CANCELLED,
+        ShipmentStatus.LOST,
+        ShipmentStatus.DAMAGED,
+      ],
+    },
   },
-}
 
+  billingRecord: null,
 },
 
         include: {
@@ -82,6 +76,9 @@ export class BillingEngineService {
           shipmentDate: 'asc',
         },
       });
+      console.log("Shipments Found:", shipments.length);
+
+console.log("Rate Cards Found:", rateCards.length);
 
     if (shipments.length === 0) {
       return {
@@ -101,15 +98,37 @@ export class BillingEngineService {
      // ==========================================
 // Resolve Seller Rate Card
 // ==========================================
+console.log({
+  awb: shipment.awbNumber,
+  carrierId: shipment.carrierId,
+  service: shipment.service,
+  weight: shipment.applicableWeight,
+});
+let rateCard;
 
-const rateCard =
-  this.rateResolver.findRate(
+try {
+  rateCard = this.rateResolver.findRate(
     rateCards,
     shipment.carrierId,
     shipment.service,
     shipment.applicableWeight,
   );
+} catch (error) {
+  console.log(
+  `Rate card not found for AWB: ${shipment.awbNumber}`,
+);
 
+console.log(error);
+
+  continue;
+}
+if (!shipment.zone) {
+  console.log(
+    `Zone not found for AWB: ${shipment.awbNumber}`,
+  );
+
+  continue;
+}
 // ==========================================
 // Calculate Forward Charge
 // ==========================================
@@ -242,22 +261,23 @@ billingRecords.push({
 // };
 
 
-await this.prisma.billingRecord.createMany({
-  data: billingRecords,
-});
+await this.prisma.$transaction([
+  this.prisma.billingRecord.createMany({
+    data: billingRecords,
+  }),
 
-await this.prisma.shipment.updateMany({
-  where: {
-    id: {
-      in: shipments.map((s) => s.id),
+  this.prisma.shipment.updateMany({
+    where: {
+      id: {
+        in: shipments.map((s) => s.id),
+      },
     },
-  },
-  data: {
-    billingStatus: 'BILLED',
-    billingMonth,
-  },
-});
-
+    data: {
+      billingStatus: 'BILLED',
+      billingMonth,
+    },
+  }),
+]);
 return {
   success: true,
 
