@@ -19,6 +19,22 @@ enum ServiceType {
 }
 
 // User
+// model User {
+//  id String @id @default(cuid())
+
+//  name     String
+//  email    String @unique
+//  password String
+
+//  role UserRole @default(USER)
+
+//  createdAt DateTime @default(now())
+//  updatedAt DateTime @updatedAt
+// }
+
+
+ // Updated User Model for pdf generation
+
 model User {
   id String @id @default(cuid())
 
@@ -27,6 +43,18 @@ model User {
   password String
 
   role UserRole @default(USER)
+
+  // Company / Invoice Details
+  companyName String?
+  address     String?
+  city        String?
+  state       String?
+  pincode     String?
+  gstNumber   String?
+  phone       String?
+
+  logoUrl      String?
+  signatureUrl String?
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt

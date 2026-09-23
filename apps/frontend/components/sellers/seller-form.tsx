@@ -1,6 +1,6 @@
 "use client";
 
-import { Seller } from "@/types/Seller";
+import { Seller } from "@/types/seller";
 
 interface SellerFormProps {
   seller: Seller;
@@ -51,7 +51,7 @@ export default function SellerForm({
         <input
           type="email"
           name="email"
-          value={seller.email}
+          value={seller.email ?? ""}
           onChange={onChange}
           className="w-full rounded-lg border px-3 py-2"
         />
@@ -64,7 +64,7 @@ export default function SellerForm({
 
         <input
           name="phone"
-          value={seller.phone}
+          value={seller.phone ?? ""}
           onChange={onChange}
           className="w-full rounded-lg border px-3 py-2"
         />
@@ -77,7 +77,7 @@ export default function SellerForm({
 
         <input
           name="gstNumber"
-          value={seller.gstNumber}
+          value={seller.gstNumber ?? ""}
           onChange={onChange}
           className="w-full rounded-lg border px-3 py-2"
         />
@@ -91,7 +91,7 @@ export default function SellerForm({
         <textarea
           name="address"
           rows={4}
-          value={seller.address}
+          value={seller.address ?? ""}
           onChange={onChange}
           className="w-full rounded-lg border px-3 py-2"
         />

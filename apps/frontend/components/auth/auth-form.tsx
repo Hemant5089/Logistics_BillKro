@@ -30,6 +30,12 @@ interface AuthFormProps {
   ) => void;
 
   buttonText: string;
+
+  loading?: boolean;
+
+  error?: string;
+
+  success?: string;
 }
 
 export default function AuthForm({
@@ -42,6 +48,9 @@ export default function AuthForm({
   setPassword,
   onSubmit,
   buttonText,
+  loading = false,
+  error,
+  success,
 }: AuthFormProps) {
   return (
     <div className="flex justify-center items-center min-h-screen bg-gray-100">
@@ -52,6 +61,18 @@ export default function AuthForm({
         <h1 className="text-3xl font-bold mb-6 text-center">
           {title}
         </h1>
+
+        {error && (
+          <div className="mb-4 rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
+            {error}
+          </div>
+        )}
+
+        {success && (
+          <div className="mb-4 rounded-lg border border-green-200 bg-green-50 px-4 py-3 text-sm text-green-700">
+            {success}
+          </div>
+        )}
 
         {title === "Register" &&
           name !== undefined &&
@@ -84,8 +105,8 @@ export default function AuthForm({
           }
         />
 
-        <Button type="submit">
-          {buttonText}
+        <Button type="submit" disabled={loading}>
+          {loading ? "Please wait..." : buttonText}
         </Button>
       </form>
     </div>

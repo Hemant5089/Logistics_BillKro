@@ -1,12 +1,25 @@
-import { IsString } from 'class-validator';
+import {
+  IsArray,
+  IsOptional,
+  IsString,
+} from 'class-validator';
 
 export class CopySellerRateCardDto {
   @IsString()
-  sourceSellerId: string;
+  sourceSellerId!: string;
 
+  @IsOptional()
   @IsString()
-  targetSellerId: string;
+  targetSellerId?: string;
 
+  @IsOptional()
+  @IsArray()
+  @IsString({
+    each: true,
+  })
+  targetSellerIds?: string[];
+
+  @IsOptional()
   @IsString()
-  carrierId: string;
+  carrierId?: string;
 }

@@ -34,6 +34,12 @@ export class InvoiceExcelService {
       },
     });
 
+    if (records.length === 0) {
+       throw new NotFoundException(
+         'No invoice records found for this seller and month.',
+     ); 
+   }
+
     const workbook = new ExcelJS.Workbook();
     const worksheet = workbook.addWorksheet('Invoice');
 

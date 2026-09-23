@@ -19,11 +19,20 @@ export default function RegisterPage() {
 
   const [password, setPassword] =
     useState("");
+  const [loading, setLoading] =
+    useState(false);
+  const [error, setError] =
+    useState("");
+  const [success, setSuccess] =
+    useState("");
 
   const handleRegister = async (
     e: React.FormEvent<HTMLFormElement>
   ) => {
     e.preventDefault();
+    setError("");
+    setSuccess("");
+    setLoading(true);
 
     try {
       await authService.register({
@@ -32,13 +41,15 @@ export default function RegisterPage() {
         password,
       });
 
-      alert("Registration successful!");
+      setSuccess("Registration successful. Redirecting to login...");
 
       router.push("/login");
     } catch (error) {
       console.error(error);
 
-      alert("Registration failed!");
+      setError("Registration failed. Please check the details and try again.");
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -53,6 +64,9 @@ export default function RegisterPage() {
       setPassword={setPassword}
       onSubmit={handleRegister}
       buttonText="Register"
+      loading={loading}
+      error={error}
+      success={success}
     />
   );
 }

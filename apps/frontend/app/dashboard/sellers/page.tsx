@@ -31,11 +31,6 @@ export default function SellersPage() {
     setOpen(true);
   };
 
-  const handleEditSeller = (seller: Seller) => {
-    setSelectedSeller(seller);
-    setOpen(true);
-  };
-
   const handleSaveSeller = async (seller: Seller) => {
     try {
       const { id, ...payload } = seller;
@@ -88,7 +83,6 @@ export default function SellersPage() {
 
       <SellerTable
         sellers={sellers}
-        onEdit={handleEditSeller}
         onDelete={handleDeleteSeller}
       />
 

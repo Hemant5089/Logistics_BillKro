@@ -4,6 +4,6 @@ dist
 coverage
 .prisma
 generated
-uploads
+/uploads
 storage/temp
 storage/generated

@@ -14,11 +14,15 @@ export default function LoginPage() {
 
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState("");
 
   const handleLogin = async (
     e: React.FormEvent<HTMLFormElement>,
   ) => {
     e.preventDefault();
+    setError("");
+    setLoading(true);
 
     try {
       const response = await authService.login({
@@ -29,12 +33,12 @@ export default function LoginPage() {
       login(response.accessToken);
       setUser(response.user);
 
-      alert("Login Successful");
-
-      router.push("/dashboard");
+      router.replace("/dashboard");
     } catch (error) {
       console.error(error);
-      alert("Login Failed");
+      setError("Login failed. Please check your email and password.");
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -47,6 +51,8 @@ export default function LoginPage() {
       setPassword={setPassword}
       onSubmit={handleLogin}
       buttonText="Login"
+      loading={loading}
+      error={error}
     />
   );
 }

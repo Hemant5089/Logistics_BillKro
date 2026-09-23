@@ -9,6 +9,7 @@ import { RateResolverService } from './services/rate-resolver.service';
 import { ForwardChargeService } from './services/forward-charge.service';
 import { CodRtoService } from './services/cod-rto.service';
 
+
 @Injectable()
 export class BillingService {
   constructor(
@@ -62,13 +63,18 @@ export class BillingService {
 
     for (const shipment of shipments) {
       // Find Rate Card
-      const rateCard =
-        this.rateResolver.findRate(
-          rateCards,
-          shipment.carrierId,
-          shipment.service,
-          shipment.applicableWeight,
-        );
+      const applicableWeight = Number(
+  shipment.applicableWeight,
+);
+      const {
+  rate: rateCard,
+  billedWeight,
+} = this.rateResolver.findRate(
+  rateCards,
+  shipment.carrierId,
+  shipment.service,
+  applicableWeight,
+);
 
       // Calculate Forward
       const forward =

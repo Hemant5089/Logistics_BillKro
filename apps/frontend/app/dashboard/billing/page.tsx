@@ -14,6 +14,8 @@ interface Seller {
 export default function BillingPage() {
   const [sellerId, setSellerId] = useState("");
   const [billingMonth, setBillingMonth] = useState("");
+  const [invoicePrefix, setInvoicePrefix] = useState("");
+  const [invoiceNumber, setInvoiceNumber] = useState("");
   const [sellers, setSellers] = useState<Seller[]>([]);
   const [loading, setLoading] = useState(false);
 
@@ -67,122 +69,314 @@ export default function BillingPage() {
   }
 
   async function handleGenerate() {
-    if (!sellerId) {
-      alert("Please select seller.");
-      return;
-    }
+  if (!sellerId) {
+    alert("Please select seller.");
+    return;
+  }
 
-    if (!billingMonth) {
-      alert("Please select billing month.");
-      return;
-    }
+  if (!billingMonth) {
+    alert("Please select billing month.");
+    return;
+  }
 
-    try {
-      setLoading(true);
+  try {
+    setLoading(true);
 
-      const response =
-        await BillingService.generate(
-          sellerId,
-          billingMonth
-        );
+    // ==========================================
+    // STEP 1: Generate Billing Records
+    // ==========================================
 
+    const response = await BillingService.generate(
+      sellerId,
+      billingMonth
+    );
+
+    // If backend says there are no billable shipments
+    if (!response.success) {
       alert(
         response.message ??
-          "Billing generated successfully."
+        "No billable shipments found."
       );
-
-      handlePreview();
-    } catch (error: any) {
-      console.error(error);
-
-      alert(
-        error.response?.data?.message ??
-          "Billing generation failed."
-      );
-    } finally {
-      setLoading(false);
+      return;
     }
+
+    // ==========================================
+    // STEP 2: Download Excel
+    // ==========================================
+
+    const excelResponse =
+      await BillingService.downloadExcel(
+        sellerId,
+        billingMonth
+      );
+
+    const blob = new Blob(
+      [excelResponse.data],
+      {
+        type:
+          "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+      }
+    );
+
+    const url =
+      window.URL.createObjectURL(blob);
+
+    const link =
+      document.createElement("a");
+
+    link.href = url;
+
+    link.download =
+      `Invoice_${response.seller}_${billingMonth}.xlsx`;
+
+    document.body.appendChild(link);
+
+    link.click();
+
+    link.remove();
+
+    window.URL.revokeObjectURL(url);
+
+    // ==========================================
+    // STEP 3: Success
+    // ==========================================
+
+    alert(
+      `Bill generated successfully.\n${response.generatedBills} shipments billed.\nExcel downloaded.`
+    );
+
+  } catch (error: any) {
+    console.error(error);
+
+    alert(
+      error.response?.data?.message ??
+      "Billing generation failed."
+    );
+
+  } finally {
+    setLoading(false);
   }
+}
+
+async function handleDownloadPdf() {
+  if (!sellerId) {
+    alert("Please select seller.");
+    return;
+  }
+
+  if (!billingMonth) {
+    alert("Please select billing month.");
+    return;
+  }
+
+  if (!invoicePrefix.trim()) {
+    alert("Please enter invoice prefix.");
+    return;
+  }
+
+  if (!invoiceNumber.trim()) {
+    alert("Please enter invoice number.");
+    return;
+  }
+
+  try {
+    setLoading(true);
+
+    const pdfResponse =
+      await BillingService.downloadPdf(
+        sellerId,
+        billingMonth,
+        invoicePrefix.trim(),
+        invoiceNumber.trim()
+      );
+
+    const blob = new Blob(
+      [pdfResponse.data],
+      {
+        type: "application/pdf",
+      }
+    );
+
+    const url =
+      window.URL.createObjectURL(blob);
+
+    const link =
+      document.createElement("a");
+
+    link.href = url;
+
+    link.download =
+      `Invoice_${invoicePrefix.trim()}${invoiceNumber.trim()}_${billingMonth}.pdf`;
+
+    document.body.appendChild(link);
+
+    link.click();
+
+    link.remove();
+
+    window.URL.revokeObjectURL(url);
+
+  } catch (error: any) {
+    console.error(error);
+
+    alert(
+      error.response?.data?.message ??
+      "PDF download failed."
+    );
+  } finally {
+    setLoading(false);
+  }
+}
 
   return (
     <div className="space-y-6">
       {/* Header */}
       <div>
-        <h1 className="text-3xl font-bold">
-          Billing
-        </h1>
+       <h1 className="text-3xl font-bold tracking-tight text-gray-900">
+  Billing
+</h1>
 
-        <p className="text-gray-500">
-          Preview and Generate Monthly Billing
-        </p>
+<p className="mt-1 text-sm text-gray-500">
+  Preview, generate, and download monthly seller invoices.
+</p>
+      </div>
+{/* Billing Controls */}
+<div className="rounded-2xl border border-gray-200 bg-white p-6 shadow-sm">
+
+  {/* Section Header */}
+  <div className="mb-6">
+    <h2 className="text-lg font-semibold text-gray-900">
+      Billing Configuration
+    </h2>
+
+    <p className="mt-1 text-sm text-gray-500">
+      Select the seller and billing period to preview or generate billing.
+    </p>
+  </div>
+
+  {/* Seller + Billing Month */}
+  <div className="grid grid-cols-1 gap-5 md:grid-cols-2">
+
+    {/* Seller */}
+    <div>
+      <label className="mb-2 block text-sm font-medium text-gray-700">
+        Seller
+      </label>
+
+      <select
+        value={sellerId}
+        onChange={(e) => setSellerId(e.target.value)}
+        className="h-11 w-full rounded-lg border border-gray-300 bg-white px-3 text-sm text-gray-900 outline-none transition focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
+      >
+        <option value="">
+          Select Seller
+        </option>
+
+        {sellers.map((seller) => (
+          <option
+            key={seller.id}
+            value={seller.id}
+          >
+            {seller.sellerName}
+          </option>
+        ))}
+      </select>
+    </div>
+
+    {/* Billing Month */}
+    <div>
+      <label className="mb-2 block text-sm font-medium text-gray-700">
+        Billing Month
+      </label>
+
+      <input
+        type="month"
+        value={billingMonth}
+        onChange={(e) => setBillingMonth(e.target.value)}
+        className="h-11 w-full rounded-lg border border-gray-300 bg-white px-3 text-sm text-gray-900 outline-none transition focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
+      />
+    </div>
+
+  </div>
+
+  {/* Invoice Details */}
+  <div className="mt-5 rounded-xl border border-gray-100 bg-gray-50 p-5">
+
+    <div className="mb-4">
+      <h3 className="text-sm font-semibold text-gray-800">
+        Invoice Details
+      </h3>
+
+      <p className="mt-1 text-xs text-gray-500">
+        Enter the invoice reference for the generated PDF.
+      </p>
+    </div>
+
+    <div className="grid grid-cols-1 gap-5 md:grid-cols-2">
+
+      {/* Invoice Prefix */}
+      <div>
+        <label className="mb-2 block text-sm font-medium text-gray-700">
+          Invoice Prefix
+        </label>
+
+        <input
+          type="text"
+          value={invoicePrefix}
+          onChange={(e) => setInvoicePrefix(e.target.value)}
+          placeholder="e.g. INV"
+          className="h-11 w-full rounded-lg border border-gray-300 bg-white px-3 text-sm outline-none transition focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
+        />
       </div>
 
-      {/* Filters */}
-      <div className="rounded-xl bg-white p-6 shadow">
-        <div className="grid grid-cols-1 gap-6 md:grid-cols-3">
-          {/* Seller */}
-          <div>
-            <label className="mb-2 block font-medium">
-              Seller
-            </label>
+      {/* Invoice Number */}
+      <div>
+        <label className="mb-2 block text-sm font-medium text-gray-700">
+          Invoice Number
+        </label>
 
-            <select
-              value={sellerId}
-              onChange={(e) =>
-                setSellerId(e.target.value)
-              }
-              className="w-full rounded-lg border border-gray-300 p-3"
-            >
-              <option value="">
-                Select Seller
-              </option>
+        <input
+          type="text"
+          value={invoiceNumber}
+          onChange={(e) => setInvoiceNumber(e.target.value)}
+          placeholder="e.g. 1001"
+          className="h-11 w-full rounded-lg border border-gray-300 bg-white px-3 text-sm outline-none transition focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
+        />
+      </div>
 
-              {sellers.map((seller) => (
-                <option
-                  key={seller.id}
-                  value={seller.id}
-                >
-                  {seller.sellerName}
-                </option>
-              ))}
-            </select>
-          </div>
+    </div>
+  </div>
 
-          {/* Month */}
-          <div>
-            <label className="mb-2 block font-medium">
-              Billing Month
-            </label>
+  {/* Action Buttons */}
+  <div className="mt-6 flex flex-col gap-3 border-t border-gray-100 pt-5 sm:flex-row sm:justify-end">
 
-            <input
-              type="month"
-              value={billingMonth}
-              onChange={(e) =>
-                setBillingMonth(e.target.value)
-              }
-              className="w-full rounded-lg border border-gray-300 p-3"
-            />
-          </div>
+    {/* Preview */}
+    <button
+      onClick={handlePreview}
+      disabled={loading}
+      className="h-11 rounded-lg border border-gray-300 bg-white px-6 text-sm font-medium text-gray-700 transition hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-50"
+    >
+      {loading ? "Processing..." : "Preview Billing"}
+    </button>
 
-          {/* Buttons */}
-          <div className="flex items-end gap-3">
-            <button
-              onClick={handlePreview}
-              disabled={loading}
-              className="rounded-lg bg-blue-600 px-6 py-3 text-white hover:bg-blue-700 disabled:bg-gray-400"
-            >
-              {loading ? "Loading..." : "Preview"}
-            </button>
+    {/* Generate */}
+    <button
+      onClick={handleGenerate}
+      disabled={loading}
+      className="h-11 rounded-lg bg-blue-600 px-6 text-sm font-medium text-white shadow-sm transition hover:bg-blue-700 disabled:cursor-not-allowed disabled:bg-gray-400"
+    >
+      Generate Bill
+    </button>
 
-            <button
-              onClick={handleGenerate}
-              disabled={loading}
-              className="rounded-lg bg-green-600 px-6 py-3 text-white hover:bg-green-700 disabled:bg-gray-400"
-            >
-              Generate Bill
-            </button>
-          </div>
-        </div>
+    {/* PDF */}
+    <button
+      onClick={handleDownloadPdf}
+      disabled={loading || !sellerId || !billingMonth}
+      className="h-11 rounded-lg border border-gray-300 bg-white px-6 text-sm font-medium text-gray-700 transition hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-50"
+    >
+      Download PDF
+    </button>
+  </div>
       </div>
 {preview?.message && (
   <div className="rounded-lg bg-yellow-100 border border-yellow-300 p-4 text-yellow-800">

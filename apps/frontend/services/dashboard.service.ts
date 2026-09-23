@@ -6,3 +6,5 @@ export const DashboardService = {
     return response.data;
   },
 };
+
+export const dashboardService = DashboardService;

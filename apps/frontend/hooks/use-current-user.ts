@@ -16,12 +16,20 @@ export const useCurrentUser = () => {
 
   const {
     user,
+    token,
     setUser,
     logout,
   } = useAuthStore();
 
   useEffect(() => {
     const fetchUser = async () => {
+      if (!token) {
+        logout();
+        router.replace("/login");
+        setLoading(false);
+        return;
+      }
+
       try {
         const data =
           await authService.getMe();
@@ -32,14 +40,14 @@ export const useCurrentUser = () => {
 
         logout();
 
-        router.push("/login");
+        router.replace("/login");
       } finally {
         setLoading(false);
       }
     };
 
     fetchUser();
-  }, [router, setUser, logout]);
+  }, [router, token, setUser, logout]);
 
   return {
     user,

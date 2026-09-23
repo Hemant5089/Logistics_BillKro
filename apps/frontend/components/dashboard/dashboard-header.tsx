@@ -13,8 +13,7 @@ export default function DashboardHeader({
 
       <button
         onClick={onLogout}
-        className="bg-black text-white px-5 py-2 rounded-lg"
-      >
+        className="bg-black text-white px-5 py-2 rounded-lg">
         Logout
       </button>
     </div>

@@ -58,10 +58,32 @@ copySellerRateCard(
 importSellerRateCard(
   @Param('sellerId') sellerId: string,
   @UploadedFile() file: any,
+  @Body()
+  body: {
+    codFixedCharge?: string;
+    codPercentage?: string;
+    carrierCodSettings?: string;
+  },
 ) {
+  const carrierCodSettings =
+    body.carrierCodSettings
+      ? JSON.parse(body.carrierCodSettings)
+      : undefined;
+
   return this.sellerRateCardsService.importSellerRateCard(
     sellerId,
     file.buffer,
+    {
+      codFixedCharge:
+        body.codFixedCharge !== undefined
+          ? Number(body.codFixedCharge)
+          : undefined,
+      codPercentage:
+        body.codPercentage !== undefined
+          ? Number(body.codPercentage)
+          : undefined,
+      carrierCodSettings,
+    },
   );
 }
 }

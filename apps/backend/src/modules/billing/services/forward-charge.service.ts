@@ -2,82 +2,79 @@ import { Injectable } from '@nestjs/common';
 
 @Injectable()
 export class ForwardChargeService {
-
   calculate(
     rateCard: any,
     zone: string,
     applicableWeight: number,
   ) {
-
     let baseAmount = 0;
     let additionalAmount = 0;
 
     switch (zone) {
-
       case 'LOCAL':
-        baseAmount = rateCard.localAmount;
-        additionalAmount =
-          rateCard.localAdditionalAmount;
+        baseAmount = Number(rateCard.localAmount);
+        additionalAmount = Number(
+          rateCard.localAdditionalAmount,
+        );
         break;
 
       case 'STATE':
-        baseAmount = rateCard.stateAmount;
-        additionalAmount =
-          rateCard.stateAdditionalAmount;
+        baseAmount = Number(rateCard.stateAmount);
+        additionalAmount = Number(
+          rateCard.stateAdditionalAmount,
+        );
         break;
 
       case 'ROI':
-        baseAmount = rateCard.roiAmount;
-        additionalAmount =
-          rateCard.roiAdditionalAmount;
+        baseAmount = Number(rateCard.roiAmount);
+        additionalAmount = Number(
+          rateCard.roiAdditionalAmount,
+        );
         break;
 
       case 'METRO':
-        baseAmount = rateCard.metroAmount;
-        additionalAmount =
-          rateCard.metroAdditionalAmount;
+        baseAmount = Number(rateCard.metroAmount);
+        additionalAmount = Number(
+          rateCard.metroAdditionalAmount,
+        );
         break;
 
       case 'SPECIAL':
-        baseAmount = rateCard.specialAmount;
-        additionalAmount =
-          rateCard.specialAdditionalAmount;
+        baseAmount = Number(rateCard.specialAmount);
+        additionalAmount = Number(
+          rateCard.specialAdditionalAmount,
+        );
         break;
     }
 
-    // Inside slab
-    if (applicableWeight <= rateCard.endWeight) {
-
+    // Inside base slab
+    if (
+      applicableWeight <=
+      Number(rateCard.endWeight)
+    ) {
       return {
-
         baseCharge: baseAmount,
-
         additionalCharge: 0,
-
         forwardTotalCharge: baseAmount,
       };
-
     }
 
-    // Above slab
+    // Above base slab
     const extraWeight =
-      applicableWeight - rateCard.endWeight;
+      applicableWeight -
+      Number(rateCard.endWeight);
 
-    const slabs =
-      Math.ceil(
-        extraWeight /
-          rateCard.additionalWeight,
-      );
+    const additionalUnits = Math.ceil(
+      extraWeight /
+        Number(rateCard.additionalWeight),
+    );
 
     const additionalCharge =
-      slabs * additionalAmount;
+      additionalUnits * additionalAmount;
 
     return {
-
       baseCharge: baseAmount,
-
       additionalCharge,
-
       forwardTotalCharge:
         baseAmount + additionalCharge,
     };

@@ -35,27 +35,38 @@ export class RateResolverService {
     });
   }
 
-  findRate(
-    rateCards: any[],
-    carrierId: string,
-    service: string,
-    applicableWeight: number,
-  ) {
-    const rate = rateCards.find((card) => {
+findRate(
+  rateCards: any[],
+  carrierId: string,
+  service: string,
+  applicableWeight: number,
+) {
+  const matchingRates = rateCards
+    .filter((card) => {
       return (
         card.carrierId === carrierId &&
         card.service === service &&
-        applicableWeight >= card.startWeight &&
-        applicableWeight <= card.maxWeight
+        applicableWeight <= Number(card.maxWeight)
+      );
+    })
+    .sort((a, b) => {
+      return (
+        Number(a.maxWeight) -
+        Number(b.maxWeight)
       );
     });
 
-    if (!rate) {
-      throw new NotFoundException(
-        'Rate slab not found',
-      );
-    }
+  const rate = matchingRates[0];
 
-    return rate;
+  if (!rate) {
+    throw new NotFoundException(
+      `Rate slab not found for ${applicableWeight}kg`,
+    );
   }
+
+  return {
+    rate,
+    billedWeight: applicableWeight,
+  };
+}
 }

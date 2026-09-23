@@ -108,15 +108,26 @@ export class BillingPreviewService {
     const calculations: any[] = [];
 
     for (const shipment of shipments) {
-      let rateCard;
+
+     const applicableWeight = Number(
+  shipment.applicableWeight,
+);
+
+
+let rateCard;
+let billedWeight;
 
 try {
-  rateCard = this.rateResolver.findRate(
-    rateCards,
-    shipment.carrierId,
-    shipment.service,
-    shipment.applicableWeight,
-  );
+  const resolvedRate =
+    this.rateResolver.findRate(
+      rateCards,
+      shipment.carrierId,
+      shipment.service,
+      applicableWeight,
+    );
+
+  rateCard = resolvedRate.rate;
+  billedWeight = resolvedRate.billedWeight;
 } catch (error) {
   console.log(
     `Rate card not found for AWB: ${shipment.awbNumber}`,
@@ -124,6 +135,7 @@ try {
 
   continue;
 }
+
 if (!shipment.zone) {
   console.log(
     `Zone not found for AWB: ${shipment.awbNumber}`,
@@ -132,11 +144,11 @@ if (!shipment.zone) {
   continue;
 }
       const forward =
-        this.forwardCalculator.calculate(
-          rateCard,
-          shipment.zone.name,
-          shipment.applicableWeight,
-        );
+  this.forwardCalculator.calculate(
+    rateCard,
+    shipment.zone.name,
+    applicableWeight,
+  );
 
       const codCharge =
         this.codRtoCalculator.calculateCod(
@@ -177,9 +189,10 @@ if (!shipment.zone) {
 
         volumetricWeight:
           shipment.volumetricWeight,
+       
+          applicableWeight,
 
-        applicableWeight:
-          shipment.applicableWeight,
+          billedWeight,
 
         rateCardId: rateCard.id,
 

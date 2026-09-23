@@ -1,11 +1,10 @@
 import { Module } from '@nestjs/common';
+import { ConfigModule } from '@nestjs/config';
 
-import { PrismaModule } from './common/prisma/prisma.module'; 
-
+import { PrismaModule } from './common/prisma/prisma.module';
 
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
-
 
 import { AuthModule } from './modules/auth/auth.module';
 import { UsersModule } from './modules/users/users.module';
@@ -23,8 +22,28 @@ import { ReportsModule } from './modules/reports/reports.module';
 import { RateCardsModule } from './modules/rate-cards/rate-cards.module';
 
 @Module({
-  // imports: [AuthModule, UsersModule, UploadsModule, BillingModule, ShipmentsModule, SellersModule, CarriersModule, ZonesModule, DashboardModule],
-    imports: [PrismaModule , AuthModule, UsersModule, UploadsModule, BillingModule, ShipmentsModule, SellersModule,CarriersModule,ZonesModule,DashboardModule, RateCardTemplateModule, SellerRateCardsModule, InvoiceModule, ReportsModule, RateCardsModule],
+  imports: [
+    ConfigModule.forRoot({
+      isGlobal: true,
+      envFilePath: '.env',
+    }),
+
+    PrismaModule,
+    AuthModule,
+    UsersModule,
+    UploadsModule,
+    BillingModule,
+    ShipmentsModule,
+    SellersModule,
+    CarriersModule,
+    ZonesModule,
+    DashboardModule,
+    RateCardTemplateModule,
+    SellerRateCardsModule,
+    InvoiceModule,
+    ReportsModule,
+    RateCardsModule,
+  ],
 
   controllers: [AppController],
 

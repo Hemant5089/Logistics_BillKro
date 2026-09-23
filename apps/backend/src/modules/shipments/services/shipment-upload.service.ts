@@ -162,10 +162,15 @@ for (const row of validation.data) {
 console.log("Zone Table:", [...zoneMap.keys()]);
 
 const zone = zoneMap.get(zoneName);
-  const shipmentStatus =
-  ShipmentStatusMap[
-    row.shipmentStatus?.trim().toUpperCase()
-  ] ?? ShipmentStatus.UNKNOWN;
+
+const normalizedStatus =
+  row.shipmentStatus
+    ?.trim()
+    .toUpperCase();
+
+const shipmentStatus =
+  ShipmentStatusMap[normalizedStatus] ??
+  ShipmentStatus.UNKNOWN;
 
  const shipmentData = {
   awbNumber: row.awbNumber,

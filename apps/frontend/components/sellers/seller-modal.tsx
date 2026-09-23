@@ -52,7 +52,7 @@ export default function SellerModal({
     if (
       !formData.sellerName.trim() ||
       !formData.companyName.trim() ||
-      !formData.email.trim()
+      !formData.email?.trim()
     ) {
       alert("Please fill all required fields.");
       return;

@@ -184,10 +184,22 @@ export class SellerRateCardsService {
 }
 
 async copySellerRateCard(dto: CopySellerRateCardDto) {
-  // Prevent copying to same seller
-  if (dto.sourceSellerId === dto.targetSellerId) {
+  const targetSellerIds =
+    dto.targetSellerIds?.length
+      ? dto.targetSellerIds
+      : dto.targetSellerId
+        ? [dto.targetSellerId]
+        : [];
+
+  if (targetSellerIds.length === 0) {
     throw new BadRequestException(
-      'Source seller and target seller cannot be the same',
+      'Select at least one target seller',
+    );
+  }
+
+  if (targetSellerIds.includes(dto.sourceSellerId)) {
+    throw new BadRequestException(
+      'Source seller and target sellers cannot be the same',
     );
   }
 
@@ -202,105 +214,143 @@ async copySellerRateCard(dto: CopySellerRateCardDto) {
     throw new NotFoundException('Source seller not found');
   }
 
-  // Check target seller
-  const targetSeller = await this.prisma.seller.findUnique({
+  const targetSellers = await this.prisma.seller.findMany({
     where: {
-      id: dto.targetSellerId,
+      id: {
+        in: targetSellerIds,
+      },
     },
   });
 
-  if (!targetSeller) {
-    throw new NotFoundException('Target seller not found');
+  if (targetSellers.length !== targetSellerIds.length) {
+    throw new NotFoundException(
+      'One or more target sellers were not found',
+    );
   }
 
-  // Check carrier
-  const carrier = await this.prisma.carrier.findUnique({
-    where: {
-      id: dto.carrierId,
-    },
-  });
+  if (dto.carrierId) {
+    const carrier = await this.prisma.carrier.findUnique({
+      where: {
+        id: dto.carrierId,
+      },
+    });
 
-  if (!carrier) {
-    throw new NotFoundException('Carrier not found');
+    if (!carrier) {
+      throw new NotFoundException('Carrier not found');
+    }
   }
 
   // Get source seller rate cards
   const sourceRates = await this.prisma.sellerRateCard.findMany({
     where: {
       sellerId: dto.sourceSellerId,
-      carrierId: dto.carrierId,
+      ...(dto.carrierId
+        ? {
+            carrierId: dto.carrierId,
+          }
+        : {}),
     },
   });
 
   if (sourceRates.length === 0) {
     throw new BadRequestException(
-      'Source seller has no rate cards for this carrier',
+      'Source seller has no rate cards to copy',
     );
   }
 
-  // Delete target seller's existing rate cards
-  await this.prisma.sellerRateCard.deleteMany({
-    where: {
-      sellerId: dto.targetSellerId,
-      carrierId: dto.carrierId,
-    },
-  });
+  const operations: any[] = [];
 
-  // Copy all rows
-  await this.prisma.sellerRateCard.createMany({
-    data: sourceRates.map((rate) => ({
-      sellerId: dto.targetSellerId,
+  for (const targetSellerId of targetSellerIds) {
+    operations.push(
+      this.prisma.sellerRateCard.deleteMany({
+        where: {
+          sellerId: targetSellerId,
+          ...(dto.carrierId
+            ? {
+                carrierId: dto.carrierId,
+              }
+            : {}),
+        },
+      }),
+    );
 
-      masterRateCardId: rate.masterRateCardId,
+    operations.push(
+      this.prisma.sellerRateCard.createMany({
+        data: sourceRates.map((rate) => ({
+          sellerId: targetSellerId,
 
-      name: rate.name,
+          masterRateCardId: rate.masterRateCardId,
 
-      carrierId: rate.carrierId,
+          name: rate.name,
 
-      service: rate.service,
+          carrierId: rate.carrierId,
 
-      startWeight: rate.startWeight,
+          service: rate.service,
 
-      endWeight: rate.endWeight,
+          startWeight: rate.startWeight,
 
-      maxWeight: rate.maxWeight,
+          endWeight: rate.endWeight,
 
-      additionalWeight: rate.additionalWeight,
+          maxWeight: rate.maxWeight,
 
-      localAmount: rate.localAmount,
+          additionalWeight: rate.additionalWeight,
 
-      localAdditionalAmount: rate.localAdditionalAmount,
+          localAmount: rate.localAmount,
 
-      stateAmount: rate.stateAmount,
+          localAdditionalAmount: rate.localAdditionalAmount,
 
-      stateAdditionalAmount: rate.stateAdditionalAmount,
+          stateAmount: rate.stateAmount,
 
-      roiAmount: rate.roiAmount,
+          stateAdditionalAmount: rate.stateAdditionalAmount,
 
-      roiAdditionalAmount: rate.roiAdditionalAmount,
+          roiAmount: rate.roiAmount,
 
-      metroAmount: rate.metroAmount,
+          roiAdditionalAmount: rate.roiAdditionalAmount,
 
-      metroAdditionalAmount: rate.metroAdditionalAmount,
+          metroAmount: rate.metroAmount,
 
-      specialAmount: rate.specialAmount,
+          metroAdditionalAmount: rate.metroAdditionalAmount,
 
-      specialAdditionalAmount: rate.specialAdditionalAmount,
-    })),
-  });
+          specialAmount: rate.specialAmount,
+
+          specialAdditionalAmount: rate.specialAdditionalAmount,
+
+          codThresholdAmount: rate.codThresholdAmount,
+
+          codFixedCharge: rate.codFixedCharge,
+
+          codPercentage: rate.codPercentage,
+
+          rtoCharge: rate.rtoCharge,
+        })),
+      }),
+    );
+  }
+
+  await this.prisma.$transaction(operations);
 
   return {
     success: true,
     sourceSeller: sourceSeller.sellerName,
-    targetSeller: targetSeller.sellerName,
-    carrier: carrier.name,
-    copied: sourceRates.length,
+    targetSellers: targetSellers.map(
+      (seller) => seller.sellerName,
+    ),
+    copied: sourceRates.length * targetSellerIds.length,
   };
 }
 
 async importSellerRateCard(
   sellerId: string,
   buffer: Buffer,
+  options: {
+    codFixedCharge?: number;
+    codPercentage?: number;
+    carrierCodSettings?: {
+      carrierId: string;
+      codFixedCharge?: number;
+      codPercentage?: number;
+    }[];
+  } = {},
 ) {
   const seller = await this.prisma.seller.findUnique({
     where: {
@@ -346,6 +396,13 @@ async importSellerRateCard(
 
   const operations: any[] = [];
 
+  const carrierCodSettings = new Map(
+    options.carrierCodSettings?.map((setting) => [
+      setting.carrierId,
+      setting,
+    ]) ?? [],
+  );
+
   for (const row of rows) {
     try {
       const carrier = carrierMap.get(
@@ -368,6 +425,17 @@ async importSellerRateCard(
 
       const existing =
         existingMap.get(key);
+
+      const carrierCodSetting =
+        carrierCodSettings.get(carrier.id);
+
+      const codFixedCharge =
+        carrierCodSetting?.codFixedCharge ??
+        options.codFixedCharge;
+
+      const codPercentage =
+        carrierCodSetting?.codPercentage ??
+        options.codPercentage;
 
       if (existing) {
         operations.push(
@@ -412,6 +480,18 @@ async importSellerRateCard(
 
               specialAdditionalAmount:
                 row.specialAdditionalAmount,
+
+              ...(codFixedCharge !== undefined
+                ? {
+                    codFixedCharge,
+                  }
+                : {}),
+
+              ...(codPercentage !== undefined
+                ? {
+                    codPercentage,
+                  }
+                : {}),
             },
           }),
         );
@@ -474,6 +554,18 @@ async importSellerRateCard(
 
               specialAdditionalAmount:
                 row.specialAdditionalAmount,
+
+              ...(codFixedCharge !== undefined
+                ? {
+                    codFixedCharge,
+                  }
+                : {}),
+
+              ...(codPercentage !== undefined
+                ? {
+                    codPercentage,
+                  }
+                : {}),
             },
           }),
         );

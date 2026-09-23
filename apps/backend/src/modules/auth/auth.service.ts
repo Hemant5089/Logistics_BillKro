@@ -36,19 +36,15 @@ export class AuthService {
 
     const existingUser =
       await this.prisma.user.findUnique({
-
         where: {
           email: dto.email,
         },
-
       });
 
     if (existingUser) {
-
       throw new BadRequestException(
         'Email already exists',
       );
-
     }
 
     const hashedPassword =
@@ -59,7 +55,6 @@ export class AuthService {
 
     const user =
       await this.prisma.user.create({
-
         data: {
 
           name: dto.name,
@@ -68,21 +63,84 @@ export class AuthService {
 
           password: hashedPassword,
 
-        },
+          // Company / Invoice Details
 
+          companyName:
+            dto.companyName,
+
+          address:
+            dto.address,
+
+          city:
+            dto.city,
+
+          state:
+            dto.state,
+
+          pincode:
+            dto.pincode,
+
+          gstNumber:
+            dto.gstNumber,
+
+          phone:
+            dto.phone,
+
+          logoUrl:
+            dto.logoUrl,
+
+          signatureUrl:
+            dto.signatureUrl,
+        },
       });
 
     return {
-  message: 'User registered successfully',
-  user: {
-    id: user.id,
-    name: user.name,
-    email: user.email,
-    role: user.role,
-    createdAt: user.createdAt,
-  },
-};
+      message:
+        'User registered successfully',
+
+      user: {
+
+        id: user.id,
+
+        name: user.name,
+
+        email: user.email,
+
+        role: user.role,
+
+        companyName:
+          user.companyName,
+
+        address:
+          user.address,
+
+        city:
+          user.city,
+
+        state:
+          user.state,
+
+        pincode:
+          user.pincode,
+
+        gstNumber:
+          user.gstNumber,
+
+        phone:
+          user.phone,
+
+        logoUrl:
+          user.logoUrl,
+
+        signatureUrl:
+          user.signatureUrl,
+
+        createdAt:
+          user.createdAt,
+      },
+    };
   }
+
 
   async login(
   dto: LoginDto,

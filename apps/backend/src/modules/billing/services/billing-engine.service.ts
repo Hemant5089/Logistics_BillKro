@@ -52,19 +52,16 @@ export class BillingEngineService {
 
   billingStatus: 'PENDING',
 
-  billingEligibility: 'BILLABLE',
-
   NOT: {
-    shipmentStatus: {
-      in: [
-        ShipmentStatus.CANCELLED,
-        ShipmentStatus.LOST,
-        ShipmentStatus.DAMAGED,
-      ],
-    },
+  shipmentStatus: {
+    in: [
+      ShipmentStatus.CANCELLED,
+      ShipmentStatus.LOST,
+      ShipmentStatus.DAMAGED,
+    ],
   },
+}
 
-  billingRecord: null,
 },
 
         include: {
@@ -76,9 +73,6 @@ export class BillingEngineService {
           shipmentDate: 'asc',
         },
       });
-      console.log("Shipments Found:", shipments.length);
-
-console.log("Rate Cards Found:", rateCards.length);
 
     if (shipments.length === 0) {
       return {
@@ -98,37 +92,21 @@ console.log("Rate Cards Found:", rateCards.length);
      // ==========================================
 // Resolve Seller Rate Card
 // ==========================================
-console.log({
-  awb: shipment.awbNumber,
-  carrierId: shipment.carrierId,
-  service: shipment.service,
-  weight: shipment.applicableWeight,
-});
-let rateCard;
 
-try {
-  rateCard = this.rateResolver.findRate(
-    rateCards,
-    shipment.carrierId,
-    shipment.service,
-    shipment.applicableWeight,
-  );
-} catch (error) {
-  console.log(
-  `Rate card not found for AWB: ${shipment.awbNumber}`,
+const applicableWeight = Number(
+  shipment.applicableWeight,
 );
 
-console.log(error);
+const {
+  rate: rateCard,
+  billedWeight,
+} = this.rateResolver.findRate(
+  rateCards,
+  shipment.carrierId,
+  shipment.service,
+  applicableWeight,
+);
 
-  continue;
-}
-if (!shipment.zone) {
-  console.log(
-    `Zone not found for AWB: ${shipment.awbNumber}`,
-  );
-
-  continue;
-}
 // ==========================================
 // Calculate Forward Charge
 // ==========================================
@@ -137,9 +115,8 @@ const forward =
   this.forwardCalculator.calculate(
     rateCard,
     shipment.zone.name,
-    shipment.applicableWeight,
+    applicableWeight,
   );
-
 // ==========================================
 // Calculate COD Charge
 // ==========================================
@@ -199,10 +176,10 @@ billingRecords.push({
   zoneId: shipment.zoneId,
 
   sellerRateCardId: rateCard.id,
+  
+  applicableWeight,
 
-  applicableWeight: shipment.applicableWeight,
-
-  billedWeight: shipment.applicableWeight,
+  billedWeight,
 
   slabStartWeight: rateCard.startWeight,
 
@@ -261,27 +238,28 @@ billingRecords.push({
 // };
 
 
-await this.prisma.$transaction([
-  this.prisma.billingRecord.createMany({
-    data: billingRecords,
-  }),
+await this.prisma.billingRecord.createMany({
+  data: billingRecords,
+});
 
-  this.prisma.shipment.updateMany({
-    where: {
-      id: {
-        in: shipments.map((s) => s.id),
-      },
+await this.prisma.shipment.updateMany({
+  where: {
+    id: {
+      in: shipments.map((s) => s.id),
     },
-    data: {
-      billingStatus: 'BILLED',
-      billingMonth,
-    },
-  }),
-]);
+  },
+  data: {
+    billingStatus: 'BILLED',
+    billingMonth,
+  },
+});
+
 return {
   success: true,
 
   seller: seller.sellerName,
+
+  sellerId,
 
   generatedBills: billingRecords.length,
 

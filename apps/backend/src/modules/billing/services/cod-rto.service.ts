@@ -3,37 +3,31 @@ import { Injectable } from '@nestjs/common';
 @Injectable()
 export class CodRtoService {
 
-  calculateCod(
+calculateCod(
   shipmentStatus: string,
   paymentMode: string,
   productValue: number,
   rateCard: any,
 ) {
-
-  if (shipmentStatus === 'RTO_DELIVERED') {
+  // Only delivered COD shipments get COD charge
+  if (
+    shipmentStatus !== 'DELIVERED' ||
+    paymentMode !== 'COD'
+  ) {
     return 0;
   }
 
-  // Prepaid shipments never get COD charge
-  if (paymentMode !== 'COD') {
-    return 0;
-  }
-
-  // Safety
   if (!productValue) {
     return 0;
   }
 
-  // Fixed COD
   if (productValue < rateCard.codThresholdAmount) {
     return rateCard.codFixedCharge;
   }
 
-  // Percentage COD
   return Number(
     (
-      productValue *
-      rateCard.codPercentage /
+      (productValue * rateCard.codPercentage) /
       100
     ).toFixed(2),
   );
