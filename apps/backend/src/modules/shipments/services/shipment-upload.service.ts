@@ -161,7 +161,15 @@ for (const row of validation.data) {
  console.log("Resolved Zone:", zoneName);
 console.log("Zone Table:", [...zoneMap.keys()]);
 
-const zone = zoneMap.get(zoneName);
+const normalizedZoneName = zoneName.trim().toUpperCase();
+
+const zone = zoneMap.get(normalizedZoneName);
+
+if (!zone) {
+  throw new BadRequestException(
+    `Zone "${zoneName}" not found for AWB "${row.awbNumber}"`,
+  );
+}
 
 const normalizedStatus =
   row.shipmentStatus
@@ -181,7 +189,7 @@ const shipmentStatus =
 
   carrierId: carrier.id,
 
-  zoneId: zone?.id,
+  zoneId: zone.id,
 
   service: 'SURFACE',
 
