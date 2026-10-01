@@ -261,9 +261,17 @@ if (existingShipment) {
 // ===========================
 
 if (createData.length > 0) {
-  await this.prisma.shipment.createMany({
-    data: createData,
-  });
+  try {
+    await this.prisma.shipment.createMany({
+      data: createData,
+    });
+  } catch (error) {
+    console.error('SHIPMENT CREATE ERROR:', error);
+    if (error instanceof Error) {
+      console.error('ERROR MESSAGE:', error.message);
+    }
+    throw error;
+  }
 }
 
 // ===========================
